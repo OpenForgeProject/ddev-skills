@@ -15,5 +15,9 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
+          # The token is required for creating pull requests and releases.
+          # Using GITHUB_TOKEN is standard, but ensure permissions are set.
           token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: simple
           config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
