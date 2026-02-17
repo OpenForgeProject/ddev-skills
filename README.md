@@ -1,4 +1,4 @@
-<div style="text-align: center;">
+<div style="width: 100%; disply: block; text-align: center;">
     <img src="image/ddev-skills-logo.png" height="200px" />
 </div>
 
