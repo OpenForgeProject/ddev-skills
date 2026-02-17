@@ -1,4 +1,4 @@
-<div style="width: 100%; disply: block; text-align: center;">
+<div style="width: 100%; display: block; text-align: center;">
     <img src="image/ddev-skills-logo.png" height="200px" />
 </div>
 
@@ -11,7 +11,7 @@
 
 ## Overview
 
-This add-on integrates Skills into your [DDEV](https://ddev.com/) project. It allows you to manage and install [skills.sh](https://skills.sh) via a simple configuration file. It reads the skills you want to install from a `.env.skills` file and uses `npx` to install them on your host machine. This add-on is ideal for developers who want to easily manage and update their skills without leaving their DDEV environment.
+This add-on integrates Skills into your [DDEV](https://ddev.com/) project. It allows you to manage and install [skills.sh](https://skills.sh) via a simple configuration file. It reads the skills you want to install from a `.env.skills` file and uses `npx` to install them inside your DDEV web container. This add-on is ideal for developers who want to easily manage and update their skills directly within their project's environment without requiring Node.js on their host machine.
 
 ## Prerequisites
 
