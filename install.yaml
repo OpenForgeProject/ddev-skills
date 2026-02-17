@@ -1,6 +1,7 @@
 name: skills
 
 project_files:
-  - docker-compose.skills.yaml
+  - commands/host/skills
+  - .env.skills.sample
 
 ddev_version_constraint: '>= v1.24.3'
