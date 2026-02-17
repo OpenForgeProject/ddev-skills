@@ -22,6 +22,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}OpenForge Skills Manager${NC}"
@@ -30,8 +31,39 @@ echo ""
 # Suppress npm warnings
 export NPM_CONFIG_LOGLEVEL=error
 
-# Check if skills are installed (with timeout)
-INSTALLED_SKILLS=$(timeout 30 npx --yes skills list 2>/dev/null || echo "")
+# Determine skills directory location
+# Check standard DDEV paths and relative to script execution
+POSSIBLE_DIRS=(
+    "${SCRIPT_DIR}/../../.agents/skills"
+    "/var/www/html/.agents/skills"
+    "${PWD}/.agents/skills"
+)
+
+AGENTS_SKILLS_DIR=""
+for dir in "${POSSIBLE_DIRS[@]}"; do
+    if [[ -d "$dir" ]]; then
+        AGENTS_SKILLS_DIR="$dir"
+        break
+    fi
+done
+
+INSTALLED_SKILLS=()
+
+if [[ -n "$AGENTS_SKILLS_DIR" ]]; then
+    # Use simple globbing instead of find/process substitution for better compatibility
+    for skill_path in "$AGENTS_SKILLS_DIR"/*; do
+        if [[ -d "$skill_path" ]]; then
+            skill_name=$(basename "$skill_path")
+            INSTALLED_SKILLS+=("$skill_name")
+        fi
+    done
+fi
+
+# Initialize counters
+UPDATED_COUNT=0
+INSTALLED_COUNT=0
+REMOVED_COUNT=0
+CONFIGURED_SKILLS=()
 
 # Process each line from config file
 while IFS='=' read -r skill_name repo_url; do
@@ -42,21 +74,61 @@ while IFS='=' read -r skill_name repo_url; do
     skill_name=$(echo "$skill_name" | tr -d '"' | xargs)
     repo_url=$(echo "$repo_url" | tr -d '"' | xargs)
 
-    if echo "$INSTALLED_SKILLS" | grep -q "$skill_name"; then
-        echo -ne "${YELLOW}Updating: $skill_name${NC} "
-        if timeout 60 npx --yes skills update --skill "$skill_name" -y >/dev/null 2>&1; then
+    # Add to configured list
+    CONFIGURED_SKILLS+=("$skill_name")
+
+    # Check if skill is already installed
+    is_installed=false
+    for installed in "${INSTALLED_SKILLS[@]}"; do
+        if [[ "$installed" == "$skill_name" ]]; then
+            is_installed=true
+            break
+        fi
+    done
+
+    if [ "$is_installed" = true ]; then
+        echo -ne "${YELLOW}Updating: ${CYAN}$skill_name${NC} "
+        if timeout 60 npx --yes skills update --skill "$skill_name" -y </dev/null >/dev/null 2>&1; then
             echo -e "${GREEN}✓${NC}"
+            ((UPDATED_COUNT++))
         else
             echo -e "${RED}✗ (timeout or error)${NC}"
         fi
     else
         echo -ne "${BLUE}Installing: $skill_name${NC} "
-        if timeout 60 npx --yes skills add "$repo_url" --skill "$skill_name" -y 2>&1 | grep -q "Done!"; then
+        if timeout 60 npx --yes skills add "$repo_url" --skill "$skill_name" -y </dev/null 2>&1 | grep -q "Done!"; then
             echo -e "${GREEN}✓${NC}"
+            ((INSTALLED_COUNT++))
         else
             echo -e "${RED}✗ (timeout or error)${NC}"
         fi
     fi
 done <<< "$SKILLS_CONFIG"
 
-echo -e "${GREEN}✓ All skills are up to date!${NC}"
+# Check for removed skills
+for installed in "${INSTALLED_SKILLS[@]}"; do
+    is_configured=false
+    for configured in "${CONFIGURED_SKILLS[@]}"; do
+        if [[ "$installed" == "$configured" ]]; then
+            is_configured=true
+            break
+        fi
+    done
+
+    if [ "$is_configured" = false ]; then
+        echo -ne "${RED}Removing: $installed${NC} "
+        if timeout 60 npx --yes skills remove "$installed" -y </dev/null >/dev/null 2>&1; then
+            echo -e "${GREEN}✓${NC}"
+            ((REMOVED_COUNT++))
+        else
+            echo -e "${RED}✗ (timeout or error)${NC}"
+        fi
+    fi
+done
+
+echo ""
+echo -e "${GREEN}Summary:${NC}"
+echo -e "  - Installed: ${GREEN}${INSTALLED_COUNT}${NC}"
+echo -e "  - Updated:   ${YELLOW}${UPDATED_COUNT}${NC}"
+echo -e "  - Removed:   ${RED}${REMOVED_COUNT}${NC}"
+echo -e "\n${GREEN}✓ All skills are up to date!${NC}"
