@@ -7,15 +7,30 @@ set -uo pipefail
 
 # Determine directory where this script is located (symlink-safe)
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-CONFIG_FILE="${SCRIPT_DIR}/../../.env.skills"
+# Use $DDEV_APPROOT if available (standard in DDEV), otherwise fallback to /var/www/html
+PROJECT_ROOT="${DDEV_APPROOT:-/var/www/html}"
+CONFIG_FILE="${PROJECT_ROOT}/.ddev/.env.skills"
+SAMPLE_FILE="${PROJECT_ROOT}/.ddev/.env.skills.sample"
 
 # Load config
-if [[ -f "${CONFIG_FILE}" ]]; then
-    SKILLS_CONFIG=$(cat "${CONFIG_FILE}")
-else
-    echo "❌ Configuration file not found at ${CONFIG_FILE}"
-    exit 1
+if [[ ! -f "${CONFIG_FILE}" ]]; then
+    if [[ -f "${SAMPLE_FILE}" ]]; then
+        echo -ne ".env.skills file not found. Create from sample? [Y/n] "
+        read -r response
+        if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]] || [[ -z "$response" ]]; then
+            cp "${SAMPLE_FILE}" "${CONFIG_FILE}"
+            echo "Created ${CONFIG_FILE} from sample."
+        else
+            echo "❌ .env.skills file not found at ${CONFIG_FILE}"
+            exit 1
+        fi
+    else
+        echo "❌ .env.skills file not found at ${CONFIG_FILE}"
+        exit 1
+    fi
 fi
+
+SKILLS_CONFIG=$(cat "${CONFIG_FILE}")
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -34,7 +49,7 @@ export NPM_CONFIG_LOGLEVEL=error
 # Determine skills directory location
 POSSIBLE_DIRS=(
     "${SCRIPT_DIR}/../../.agents/skills"
-    "/var/www/html/.agents/skills"
+    "${PROJECT_ROOT}/.agents/skills"
     "${PWD}/.agents/skills"
 )
 
@@ -129,7 +144,7 @@ for installed in "${!INSTALLED_SKILLS_MAP[@]}"; do
 done
 
 echo ""
-echo -e "${GREEN}Summary:${NC}"
+echo -e "${GREEN}Summary:${NC}\n"
 echo -e "  - Installed: ${GREEN}${INSTALLED_COUNT}${NC}"
 echo -e "  - Updated:   ${YELLOW}${UPDATED_COUNT}${NC}"
 echo -e "  - Removed:   ${RED}${REMOVED_COUNT}${NC}"
@@ -139,5 +154,5 @@ if [[ $FAILED_COUNT -gt 0 ]]; then
     echo -e "\n${RED}✗ ${FAILED_COUNT} skill(s) failed. Check output above for details.${NC}"
     exit 1
 else
-    echo -e "\n${GREEN}✓ All skills are up to date!${NC}"
+    echo -e "\n${GREEN}✓ Done!${NC}\n"
 fi
