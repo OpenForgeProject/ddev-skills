@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/OpenForgeProject/ddev-ai-agent-skills-manager/compare/v1.3.0...v1.3.1) (2026-02-18)
+
+
+### Bug Fixes
+
+* simplify .env.skills file existence check and improve output ([14c4c55](https://github.com/OpenForgeProject/ddev-ai-agent-skills-manager/commit/14c4c55784a5ee9d3f3ce539707d9d1b52b790d0))
+
 ## [1.3.0](https://github.com/OpenForgeProject/ddev-skills/compare/v1.2.3...v1.3.0) (2026-02-18)
 
 
