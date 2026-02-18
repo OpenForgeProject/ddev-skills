@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/OpenForgeProject/ddev-skills/compare/v1.2.2...v1.2.3) (2026-02-18)
+
+
+### Bug Fixes
+
+* add ddev-generated ([bacb1b6](https://github.com/OpenForgeProject/ddev-skills/commit/bacb1b6bf86347118ecf7ff527fabcc032979b0b))
+
 ## [1.2.2](https://github.com/OpenForgeProject/ddev-skills/compare/v1.2.1...v1.2.2) (2026-02-18)
 
 
